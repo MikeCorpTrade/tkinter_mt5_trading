@@ -3,10 +3,10 @@ from tkinter import font
 import MetaTrader5 as mt5
 from lots_calcul import *
 from mt5_request import *
-from IAccount import vantage_demo, vantage_live, ftmo_demo, ftmo_challenge, Account
+from IAccount import available_accounts, Account
 
-selected_account = vantage_live
 
+selected_account = available_accounts[input("select the account [vantage_demo, vantage_live, ftmo_demo, ftmo_challenge]: ")]
 
 def collect_request_info(order_type, account: Account):
     # Connect to MetaTrader 5
