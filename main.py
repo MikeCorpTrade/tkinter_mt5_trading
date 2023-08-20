@@ -6,7 +6,7 @@ from mt5_request import *
 from IAccount import available_accounts, Account
 
 
-selected_account = available_accounts[input("select the account [vantage_demo, vantage_live, ftmo_demo, ftmo_challenge]: ")]
+selected_account = available_accounts[input("select the account [ftmo_demo, ftmo_challenge]: ")]
 
 def collect_request_info(order_type, account: Account):
     # Connect to MetaTrader 5
