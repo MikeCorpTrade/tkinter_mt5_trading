@@ -9,12 +9,9 @@ class Account:
 
 ftmo_demo = Account(login=FTMO_DEMO_LOGIN, password=FTMO_DEMO_PASS, server=FTMO_DEMO_SERVER)
 ftmo_challenge = Account(login=FTMO_CHALLENGE_LOGIN, password=FTMO_CHALLENGE_PASS, server=FTMO_CHALLENGE_SERVER)
-vantage_demo = Account(login=VANTAGE_DEMO_LOGIN, password=VANTAGE_DEMO_PASS, server=VANTAGE_DEMO_SERVER)
-vantage_live = Account(login=VANTAGE_LIVE_LOGIN, password=VANTAGE_LIVE_PASS, server=VANTAGE_LIVE_SERVER)
+
 
 available_accounts = {
-    "vantage_demo": vantage_demo,
-    "vantage_live": vantage_live,
     "ftmo_demo": ftmo_demo,
     "ftmo_challenge": ftmo_challenge
 }

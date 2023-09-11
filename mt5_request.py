@@ -1,5 +1,5 @@
 import MetaTrader5 as mt5
-from IAccount import vantage_demo, ftmo_demo, Account
+from IAccount import Account
 
 
 class RequestInfo:
