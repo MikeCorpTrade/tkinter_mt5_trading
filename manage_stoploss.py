@@ -33,6 +33,7 @@ def mt5_request_stoploss(open_trade, action: int = mt5.TRADE_ACTION_SLTP):
 
 def update_stoploss_mt5(open_trade):
     symbol = open_trade.symbol
+    break_even_ratio = 1
 
     # Get the current market price
     current_price = open_trade.price_current
@@ -50,7 +51,7 @@ def update_stoploss_mt5(open_trade):
     new_request = mt5_request_stoploss(open_trade)
 
     # Update the stop loss if necessary
-    if 0.95 <= risk_reward_ratio and stop_loss < entry_price:
+    if risk_reward_ratio >= break_even_ratio and stop_loss != entry_price:
         new_request["sl"] = entry_price
         mt5.order_send(new_request)
         print(f"Position secured for: {symbol}")
