@@ -1,6 +1,8 @@
 import MetaTrader5 as mt5
 from IAccount import Account
 
+DEVIATION = 20
+MAGIC = 234000
 
 class RequestInfo:
     def __init__(self, symbol, volume, open_price, type, stop_loss, take_profit):
@@ -19,9 +21,6 @@ def mt5_request(request_info: RequestInfo):
     order_type = request_info.order_type
     stop_loss = request_info.stop_loss
     take_profit = request_info.take_profit
-
-    DEVIATION = 20
-    MAGIC = 234000
 
     # Create a new order
     request = {
@@ -74,6 +73,43 @@ def send_order(request, account: Account):
     except Exception as e:
         print(f'Error filling order {request["symbol"]}: {str(e)}'
               f'with request: {request}')
+
+    # Disconnect from MetaTrader 5
+    mt5.shutdown()
+
+
+def close_all_positions():
+    # Connect to MetaTrader 5
+    mt5.initialize()
+
+    # Get the list of open positions
+    positions = mt5.positions_get()
+
+    if positions:
+        for position in positions:
+            # Create an order to close each open position
+            request = {
+                "action": mt5.TRADE_ACTION_DEAL,
+                "symbol": position.symbol,
+                "type": mt5.ORDER_TYPE_BUY if position.type == mt5.ORDER_SELL else mt5.ORDER_SELL,
+                "volume": position.volume,
+                "price": position.price_current,
+                "deviation": DEVIATION,
+                "magic": MAGIC,
+                "comment": "Close all from Python",
+                "type_time": mt5.ORDER_TIME_GTC,
+                "type_filling": mt5.ORDER_FILLING_RETURN,
+            }
+
+            # Send the order request
+            result = mt5.order_send(request)
+
+            if result.retcode != mt5.TRADE_RETCODE_DONE:
+                print(f"Failed to close position: {result.comment}")
+            else:
+                print(f"Position closed successfully: {position.symbol}, {position.volume:.2f} lots")
+    else:
+        print("No open positions to close.")
 
     # Disconnect from MetaTrader 5
     mt5.shutdown()

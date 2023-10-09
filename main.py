@@ -80,6 +80,10 @@ sell_button = tk.Button(root, text="Sell",
                         bg="red", fg="white", font=button_font)
 sell_button.pack(side='right')
 
+# Close All Button
+close_all_button = tk.Button(root, text="Close All", command=close_all_positions, bg="red", fg="white", font=("Arial", 16, "bold"))
+close_all_button.pack(side=tk.BOTTOM, expand=False)
+
 # Stop Loss
 stop_loss_label = tk.Label(root, text="Stop Loss")
 stop_loss_label.pack()
