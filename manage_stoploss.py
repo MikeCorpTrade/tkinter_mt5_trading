@@ -2,7 +2,7 @@ import MetaTrader5 as mt5
 from IAccount import available_accounts, Account
 
 selected_account: Account = available_accounts[
-    input("select the account [vantage_demo, vantage_live, ftmo_demo, ftmo_challenge]: ")]
+    input("select the account [ftmo_demo, ftmo_challenge]: ")]
 
 
 def get_current_price(symbol: str):
