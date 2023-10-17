@@ -5,8 +5,8 @@ from lots_calcul import *
 from mt5_request import *
 from IAccount import available_accounts, Account
 
-
 selected_account = available_accounts[input("select the account [ftmo_demo, ftmo_challenge]: ")]
+
 
 def collect_request_info(order_type, account: Account):
     # Connect to MetaTrader 5
@@ -33,6 +33,7 @@ def collect_request_info(order_type, account: Account):
     pip_value = calculate_pip_value(pips, risk_percentage, account_balance, is_curreny)
     type = mt5.ORDER_TYPE_BUY if order_type == "Buy" else mt5.ORDER_TYPE_SELL
     volume = calculate_volume(pip_value, is_curreny, type=type)
+    new_volume = correct_volume(symbol, volume)
 
     # Check if Take Profit field has input
     take_profit_input = take_profit_entry.get()
@@ -48,7 +49,7 @@ def collect_request_info(order_type, account: Account):
     else:
         take_profit = 0
 
-    return RequestInfo(symbol, volume, open_price, type, stop_loss, take_profit)
+    return RequestInfo(symbol, new_volume, open_price, type, stop_loss, take_profit)
 
 
 # Create the GUI
@@ -81,7 +82,8 @@ sell_button = tk.Button(root, text="Sell",
 sell_button.pack(side='right')
 
 # Close All Button
-close_all_button = tk.Button(root, text="Close All", command=close_all_positions, bg="red", fg="white", font=("Arial", 16, "bold"))
+close_all_button = tk.Button(root, text="Close All", command=close_all_positions, bg="red", fg="white",
+                             font=("Arial", 16, "bold"))
 close_all_button.pack(side=tk.BOTTOM, expand=False)
 
 # Stop Loss

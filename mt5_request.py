@@ -4,6 +4,7 @@ from IAccount import Account
 DEVIATION = 20
 MAGIC = 234000
 
+
 class RequestInfo:
     def __init__(self, symbol, volume, open_price, type, stop_loss, take_profit):
         self.symbol = symbol
@@ -85,31 +86,37 @@ def close_all_positions():
     # Get the list of open positions
     positions = mt5.positions_get()
 
-    if positions:
-        for position in positions:
-            # Create an order to close each open position
-            request = {
-                "action": mt5.TRADE_ACTION_DEAL,
-                "symbol": position.symbol,
-                "type": mt5.ORDER_TYPE_BUY if position.type == mt5.ORDER_SELL else mt5.ORDER_SELL,
-                "volume": position.volume,
-                "price": position.price_current,
-                "deviation": DEVIATION,
-                "magic": MAGIC,
-                "comment": "Close all from Python",
-                "type_time": mt5.ORDER_TIME_GTC,
-                "type_filling": mt5.ORDER_FILLING_RETURN,
-            }
+    if not positions:
+        print(f"No open trades for account: {mt5_account.login}")
 
-            # Send the order request
-            result = mt5.order_send(request)
+        # iterate over the positions and close each one
+    for position in positions:
+        # determine the action type based on the position direction
+        if position.type == mt5.ORDER_TYPE_BUY:
+            type_f = mt5.ORDER_TYPE_SELL
+            price = mt5.symbol_info_tick(position.symbol).bid
+        elif position.type == mt5.ORDER_TYPE_SELL:
+            type_f = mt5.ORDER_TYPE_BUY
+            price = mt5.symbol_info_tick(position.symbol).ask
 
-            if result.retcode != mt5.TRADE_RETCODE_DONE:
-                print(f"Failed to close position: {result.comment}")
-            else:
-                print(f"Position closed successfully: {position.symbol}, {position.volume:.2f} lots")
-    else:
-        print("No open positions to close.")
+        # close the position using mt5.order_send()
+        result = mt5.order_send({
+            "action": mt5.TRADE_ACTION_DEAL,
+            "symbol": position.symbol,
+            "volume": position.volume,
+            "type": type_f,
+            "position": position.ticket,
+            "price": price,
+            "comment": "python script close",
+            "type_time": mt5.ORDER_TIME_GTC,
+            "type_filling": mt5.ORDER_FILLING_FOK,
+        })
+
+        # check if the order was closed successfully
+        if result.retcode == mt5.TRADE_RETCODE_DONE:
+            print(f"Order {result.request.symbol} closed: {result.comment}")
+        else:
+            print(f"Failed to close order {position.ticket}, error: {result.comment}")
 
     # Disconnect from MetaTrader 5
     mt5.shutdown()

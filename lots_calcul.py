@@ -105,3 +105,24 @@ def calculate_volume(pip_value: float, is_currency: bool, type, factor: int = 10
         volume = 50.00 if abs(volume) > 50 else volume
 
     return volume
+
+
+def correct_volume(symbol: str, volume: float) -> float:
+    # Connect to MetaTrader 5
+    mt5.initialize()
+
+    currency_base = "CHF"
+    second_currency = mt5.symbol_info(symbol).currency_profit
+
+    # Check if the symbol's path starts with "Forex"
+    if mt5.symbol_info(currency_base + second_currency):
+        exchange = mt5.symbol_info(currency_base + second_currency).bid
+        return round(volume * exchange, 2)
+    elif mt5.symbol_info(second_currency + currency_base):
+        exchange = mt5.symbol_info(second_currency + currency_base).bid
+        return round(volume * (1 / exchange), 2)
+    else:
+        return volume
+
+    # Disconnect from MetaTrader 5
+    mt5.shutdown()
