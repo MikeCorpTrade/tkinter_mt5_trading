@@ -73,7 +73,7 @@ def calculate_indices_pips(stop_loss, open_price, decimal_places: int = 2) -> fl
 
 
 def calculate_pips(stop_loss, open_price, symbol, is_currency: bool) -> float:
-    if is_currency:
+    if is_currency or "XAU" in symbol or "XAG" in symbol:
         decimal_place = 4
         pips = calculate_forex_pips(stop_loss, open_price, symbol, decimal_place)
         return pips
@@ -117,7 +117,7 @@ def correct_volume(symbol: str, volume: float) -> float:
     # Check if the symbol's path starts with "Forex"
     if mt5.symbol_info(currency_base + second_currency):
         exchange = mt5.symbol_info(currency_base + second_currency).bid
-        return round(volume * exchange, 2)
+        return round(volume * exchange, 2) if "JPY" not in symbol else round(volume * exchange * 0.01, 2)
     elif mt5.symbol_info(second_currency + currency_base):
         exchange = mt5.symbol_info(second_currency + currency_base).bid
         return round(volume * (1 / exchange), 2)
