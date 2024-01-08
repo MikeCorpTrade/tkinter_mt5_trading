@@ -141,3 +141,8 @@ def correct_volume(symbol: str, volume: float) -> float:
 
     # Disconnect from MetaTrader 5
     mt5.shutdown()
+
+def mt5_volume(pip_value: float, is_currency: bool, type: int, symbol: str) -> float:
+    volume = calculate_volume(pip_value, is_currency, type)
+    new_volume = correct_volume(symbol, volume)
+    return new_volume

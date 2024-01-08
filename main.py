@@ -21,7 +21,10 @@ def collect_request_info(order_type, account: Account):
     account_balance = account_info.balance
 
     symbol = symbol_entry.get()
-    stop_loss = float(stop_loss_entry.get())
+
+    if strategy_var.get() != "Scalping":
+        stop_loss = float(stop_loss_entry.get())
+
     risk_percentage = float(risk_percentage_entry.get())
 
     symbol_info = mt5.symbol_info(symbol)
@@ -32,8 +35,7 @@ def collect_request_info(order_type, account: Account):
     pips = calculate_pips(stop_loss, open_price, symbol, is_currency)
     pip_value = calculate_pip_value(pips, risk_percentage, account_balance, is_currency)
     type = mt5.ORDER_TYPE_BUY if order_type == "Buy" else mt5.ORDER_TYPE_SELL
-    volume = calculate_volume(pip_value, is_currency, type=type)
-    new_volume = correct_volume(symbol, volume)
+    new_volume = mt5_volume(pip_value, is_currency, type, symbol)
 
     # Check if Take Profit field has input
     take_profit_input = take_profit_entry.get()
@@ -54,15 +56,16 @@ def collect_request_info(order_type, account: Account):
         scalping_pips = pip_reference(is_currency, symbol)
         sl_target = 3 * scalping_pips
         tp_target = 5 * scalping_pips
-        pip_value = calculate_pip_value(sl_target, risk_percentage, account_balance, is_currency)
+        scalping_pip_value = calculate_pip_value(sl_target, risk_percentage, account_balance, is_currency)
+        new_volume = mt5_volume(scalping_pip_value, is_currency, type, symbol)
 
-        volume = calculate_volume(pip_value, is_currency, type=type)
-        new_volume = correct_volume(symbol, volume)
+        max_mt5_volume_currency = 50.00
+        max_mt5_volume_indice = 1000.00
 
-        if new_volume > 50 and is_currency:
-            new_volume = 50.00
-        elif new_volume > 1000 and not is_currency:
-            new_volume = 1000.00
+        if new_volume > max_mt5_volume_currency and is_currency:
+            new_volume = max_mt5_volume_currency
+        elif new_volume > max_mt5_volume_indice and not is_currency:
+            new_volume = max_mt5_volume_indice
 
         stop_loss = open_price - sl_target if order_type == "Buy" else open_price + sl_target
         take_profit = open_price + tp_target if order_type == "Buy" else open_price - tp_target
