@@ -17,6 +17,21 @@ def is_currency_pair(symbol: str) -> bool:
 
     return is_currency
 
+def pip_reference(is_currency: bool, symbol: str):
+    if is_currency:
+        # Calculate the pip value based on the currency pair's decimal places
+        if "JPY" in symbol:  # Japanese Yen currency pairs have 2 decimal places
+            pip_reference = 0.01
+        elif "XAU" in symbol:  # Gold (XAU) has 2 decimal places
+            pip_reference = 0.01
+        elif "XAG" in symbol:  # Silver (XAG) has 3 decimal places
+            pip_reference = 0.001
+        else:  # All other currency pairs have 4 decimal places
+            pip_reference = 0.0001
+        return pip_reference
+    else:
+        pip_reference = 1
+        return pip_reference
 
 def calculate_forex_pips(stop_loss: float, open_price, symbol: str, decimal_places: int = 4) -> float:
     """

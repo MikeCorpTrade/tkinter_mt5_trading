@@ -5,7 +5,7 @@ from lots_calcul import *
 from mt5_request import *
 from IAccount import available_accounts, Account
 
-selected_account = available_accounts[input("select the account [ftmo_demo, ftmo_challenge]: ")]
+selected_account = available_accounts[input("select the account [ftmo_demo, ftmo_challenge, ftmo_swing]: ")]
 
 
 def collect_request_info(order_type, account: Account):
@@ -28,11 +28,11 @@ def collect_request_info(order_type, account: Account):
 
     # Get all needed infos
     open_price = mt5.symbol_info_tick(symbol).ask if order_type == "Buy" else mt5.symbol_info_tick(symbol).bid
-    is_curreny = is_currency_pair(symbol)
-    pips = calculate_pips(stop_loss, open_price, symbol, is_curreny)
-    pip_value = calculate_pip_value(pips, risk_percentage, account_balance, is_curreny)
+    is_currency = is_currency_pair(symbol)
+    pips = calculate_pips(stop_loss, open_price, symbol, is_currency)
+    pip_value = calculate_pip_value(pips, risk_percentage, account_balance, is_currency)
     type = mt5.ORDER_TYPE_BUY if order_type == "Buy" else mt5.ORDER_TYPE_SELL
-    volume = calculate_volume(pip_value, is_curreny, type=type)
+    volume = calculate_volume(pip_value, is_currency, type=type)
     new_volume = correct_volume(symbol, volume)
 
     # Check if Take Profit field has input
@@ -48,6 +48,24 @@ def collect_request_info(order_type, account: Account):
             take_profit = round(take_profit, 5)
     else:
         take_profit = 0
+
+    # Check the strategy wanted
+    if strategy_var.get() == "Scalping":
+        scalping_pips = pip_reference(is_currency, symbol)
+        sl_target = 3 * scalping_pips
+        tp_target = 5 * scalping_pips
+        pip_value = calculate_pip_value(sl_target, risk_percentage, account_balance, is_currency)
+
+        volume = calculate_volume(pip_value, is_currency, type=type)
+        new_volume = correct_volume(symbol, volume)
+
+        if new_volume > 50 and is_currency:
+            new_volume = 50.00
+        elif new_volume > 1000 and not is_currency:
+            new_volume = 1000.00
+
+        stop_loss = open_price - sl_target if order_type == "Buy" else open_price + sl_target
+        take_profit = open_price + tp_target if order_type == "Buy" else open_price - tp_target
 
     return RequestInfo(symbol, new_volume, open_price, type, stop_loss, take_profit)
 
@@ -85,6 +103,15 @@ def calculate_and_show_volume():
 root = tk.Tk()
 root.title("MetaTrader 5 Order Placement")
 root.geometry("400x300")
+
+# Radio Buttons for Strategy
+strategy_var = tk.StringVar(value="Intraday")
+
+intraday_radio = tk.Radiobutton(root, text="Intraday", variable=strategy_var, value="Intraday")
+intraday_radio.pack(side=tk.TOP)
+
+scalping_radio = tk.Radiobutton(root, text="Scalping", variable=strategy_var, value="Scalping")
+scalping_radio.pack(side=tk.TOP)
 
 # Symbol
 symbol_label = tk.Label(root, text="Symbol")
