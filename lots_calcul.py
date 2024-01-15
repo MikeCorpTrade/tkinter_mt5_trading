@@ -125,8 +125,7 @@ def calculate_volume(pip_value: float, is_currency: bool, type, factor: int = 10
 def correct_volume(symbol: str, volume: float) -> float:
     # Connect to MetaTrader 5
     mt5.initialize()
-
-    currency_base = "CHF"
+    currency_base  = mt5.account_info().currency
     second_currency = mt5.symbol_info(symbol).currency_profit
 
     # Check if the symbol's path starts with "Forex"

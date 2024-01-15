@@ -19,14 +19,9 @@ def collect_request_info(order_type, account: Account):
     # Get the account balance
     account_info = mt5.account_info()
     account_balance = account_info.balance
-
     symbol = symbol_entry.get()
-
-    if strategy_var.get() != "Scalping":
-        stop_loss = float(stop_loss_entry.get())
-
+    stop_loss = float(stop_loss_entry.get())
     risk_percentage = float(risk_percentage_entry.get())
-
     symbol_info = mt5.symbol_info(symbol)
 
     # Get all needed infos
