@@ -22,14 +22,21 @@ def collect_request_info(order_type, account: Account):
     symbol = symbol_entry.get()
     stop_loss = float(stop_loss_entry.get())
     risk_percentage = float(risk_percentage_entry.get())
-    symbol_info = mt5.symbol_info(symbol)
 
     # Get all needed infos
-    open_price = mt5.symbol_info_tick(symbol).ask if order_type == "Buy" else mt5.symbol_info_tick(symbol).bid
+    if order_type_var.get() == "Market":
+        open_price = mt5.symbol_info_tick(symbol).ask if order_type == "Buy" else mt5.symbol_info_tick(symbol).bid
+        type = mt5.ORDER_TYPE_BUY if order_type == "Buy" else mt5.ORDER_TYPE_SELL
+        action = mt5.TRADE_ACTION_DEAL
+    elif order_type_var.get() == "Limit":
+        open_price = float(entry_price_entry.get())
+        type = mt5.ORDER_TYPE_BUY_LIMIT if order_type == "Buy" else mt5.ORDER_TYPE_SELL_LIMIT
+        action = mt5.TRADE_ACTION_PENDING
+
     is_currency = is_currency_pair(symbol)
     pips = calculate_pips(stop_loss, open_price, symbol, is_currency)
     pip_value = calculate_pip_value(pips, risk_percentage, account_balance, is_currency)
-    type = mt5.ORDER_TYPE_BUY if order_type == "Buy" else mt5.ORDER_TYPE_SELL
+
     new_volume = mt5_volume(pip_value, is_currency, type, symbol)
 
     # Check if Take Profit field has input
@@ -46,27 +53,7 @@ def collect_request_info(order_type, account: Account):
     else:
         take_profit = 0
 
-    # Check the strategy wanted
-    if strategy_var.get() == "Scalping":
-        scalping_pips = pip_reference(is_currency, symbol)
-        sl_target = 3 * scalping_pips
-        tp_target = 5 * scalping_pips
-        scalping_pip_value = calculate_pip_value(sl_target, risk_percentage, account_balance, is_currency)
-        new_volume = mt5_volume(scalping_pip_value, is_currency, type, symbol)
-
-        max_mt5_volume_currency = 50.00
-        max_mt5_volume_indice = 1000.00
-
-        if new_volume > max_mt5_volume_currency and is_currency:
-            new_volume = max_mt5_volume_currency
-        elif new_volume > max_mt5_volume_indice and not is_currency:
-            new_volume = max_mt5_volume_indice
-
-        stop_loss = open_price - sl_target if order_type == "Buy" else open_price + sl_target
-        take_profit = open_price + tp_target if order_type == "Buy" else open_price - tp_target
-
-    return RequestInfo(symbol, new_volume, open_price, type, stop_loss, take_profit)
-
+    return RequestInfo(action, symbol, new_volume, open_price, type, stop_loss, take_profit)
 
 def update_mt5_volume() -> None:
     mt5.initialize()
@@ -91,6 +78,12 @@ def update_mt5_volume() -> None:
 
     mt5_volume_label.config(text=f"MT5 Volume: {new_volume:.2f} lots")
 
+# Activate the entry price field
+def on_order_type_change():
+    if order_type_var.get() == "Market":
+        entry_price_entry.config(state='disabled')
+    else:
+        entry_price_entry.config(state='normal')
 
 # Function to calculate and display the MT5 volume
 def calculate_and_show_volume():
@@ -102,14 +95,13 @@ root = tk.Tk()
 root.title("MetaTrader 5 Order Placement")
 root.geometry("400x300")
 
-# Radio Buttons for Strategy
-strategy_var = tk.StringVar(value="Intraday")
-
-intraday_radio = tk.Radiobutton(root, text="Intraday", variable=strategy_var, value="Intraday")
-intraday_radio.pack(side=tk.TOP)
-
-scalping_radio = tk.Radiobutton(root, text="Scalping", variable=strategy_var, value="Scalping")
-scalping_radio.pack(side=tk.TOP)
+# Type d'ordre : Market ou Limit
+order_type_var = tk.StringVar(value="Market")
+tk.Label(root, text="Type d'ordre:").pack()
+market_radio = tk.Radiobutton(root, text="Market", variable=order_type_var, value="Market", command=on_order_type_change)
+limit_radio = tk.Radiobutton(root, text="Limit", variable=order_type_var, value="Limit", command=on_order_type_change)
+market_radio.pack()
+limit_radio.pack()
 
 # Symbol
 symbol_label = tk.Label(root, text="Symbol")
@@ -120,6 +112,12 @@ symbol_entry.pack()
 # Create a bold font
 button_font = font.Font(weight="bold")
 text_color = "white"
+
+# Prix d'entrée (pour ordre limite)
+entry_price_label = tk.Label(root, text="Prix d'exécution (Limit only):")
+entry_price_label.pack()
+entry_price_entry = tk.Entry(root, state='disabled')
+entry_price_entry.pack()
 
 # Buy Button
 buy_button = tk.Button(root, text="Buy",
@@ -134,11 +132,6 @@ sell_button = tk.Button(root, text="Sell",
                                                    account=selected_account),
                         bg="red", fg="white", font=button_font)
 sell_button.pack(side='right')
-
-# Close All Button
-close_all_button = tk.Button(root, text="Close All", command=close_all_positions, bg="red", fg="white",
-                             font=("Arial", 16, "bold"))
-close_all_button.pack(side=tk.BOTTOM, expand=False)
 
 # Stop Loss
 stop_loss_label = tk.Label(root, text="Stop Loss")

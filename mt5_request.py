@@ -6,7 +6,8 @@ MAGIC = 234000
 
 
 class RequestInfo:
-    def __init__(self, symbol, volume, open_price, type, stop_loss, take_profit):
+    def __init__(self, action, symbol, volume, open_price, type, stop_loss, take_profit):
+        self.action = action
         self.symbol = symbol
         self.volume = volume
         self.price = open_price
@@ -16,6 +17,7 @@ class RequestInfo:
 
 
 def mt5_request(request_info: RequestInfo):
+    action = request_info.action
     symbol = request_info.symbol
     volume = request_info.volume
     open_price = request_info.price
@@ -25,7 +27,7 @@ def mt5_request(request_info: RequestInfo):
 
     # Create a new order
     request = {
-        "action": mt5.TRADE_ACTION_DEAL,
+        "action": action,
         "symbol": symbol,
         "volume": volume,
         "type": order_type,
@@ -74,49 +76,6 @@ def send_order(request, account: Account):
     except Exception as e:
         print(f'Error filling order {request["symbol"]}: {str(e)}'
               f'with request: {request}')
-
-    # Disconnect from MetaTrader 5
-    mt5.shutdown()
-
-
-def close_all_positions():
-    # Connect to MetaTrader 5
-    mt5.initialize()
-
-    # Get the list of open positions
-    positions = mt5.positions_get()
-
-    if not positions:
-        print(f"No open trades for account: {mt5_account.login}")
-
-        # iterate over the positions and close each one
-    for position in positions:
-        # determine the action type based on the position direction
-        if position.type == mt5.ORDER_TYPE_BUY:
-            type_f = mt5.ORDER_TYPE_SELL
-            price = mt5.symbol_info_tick(position.symbol).bid
-        elif position.type == mt5.ORDER_TYPE_SELL:
-            type_f = mt5.ORDER_TYPE_BUY
-            price = mt5.symbol_info_tick(position.symbol).ask
-
-        # close the position using mt5.order_send()
-        result = mt5.order_send({
-            "action": mt5.TRADE_ACTION_DEAL,
-            "symbol": position.symbol,
-            "volume": position.volume,
-            "type": type_f,
-            "position": position.ticket,
-            "price": price,
-            "comment": "python script close",
-            "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_FOK,
-        })
-
-        # check if the order was closed successfully
-        if result.retcode == mt5.TRADE_RETCODE_DONE:
-            print(f"Order {result.request.symbol} closed: {result.comment}")
-        else:
-            print(f"Failed to close order {position.ticket}, error: {result.comment}")
 
     # Disconnect from MetaTrader 5
     mt5.shutdown()
