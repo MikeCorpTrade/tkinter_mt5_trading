@@ -1,11 +1,13 @@
 import tkinter as tk
-from tkinter import font
+from tkinter import font, ttk
 import MetaTrader5 as mt5
 from lots_calcul import *
 from mt5_request import *
 from IAccount import available_accounts, Account
 
 selected_account = available_accounts[input("select the account [ftmo_demo, ftmo_challenge]: ")]
+# Available assets
+symbols_list = ["GER40.cash", "US500.cash", "US100.cash","US2000.cash", "US30.cash", "EURUSD", "GBPUSD", "AUDUSD", "USDCAD", "USDCHF", "USDJPY"]
 
 
 def collect_request_info(order_type, account: Account):
@@ -19,7 +21,7 @@ def collect_request_info(order_type, account: Account):
     # Get the account balance
     account_info = mt5.account_info()
     account_balance = account_info.balance
-    symbol = symbol_entry.get()
+    symbol = symbol_var.get()
     stop_loss = float(stop_loss_entry.get())
     risk_percentage = float(risk_percentage_entry.get())
 
@@ -55,39 +57,12 @@ def collect_request_info(order_type, account: Account):
 
     return RequestInfo(action, symbol, new_volume, open_price, type, stop_loss, take_profit)
 
-def update_mt5_volume() -> None:
-    mt5.initialize()
-
-    # Get the account balance
-    account_info = mt5.account_info()
-    account_balance = account_info.balance
-
-    symbol = symbol_entry.get()
-    stop_loss = float(stop_loss_entry.get())
-    risk_percentage = float(risk_percentage_entry.get())
-
-    symbol_info = mt5.symbol_info(symbol)
-
-    # Get all needed infos
-    open_price = (mt5.symbol_info_tick(symbol).ask + mt5.symbol_info_tick(symbol).bid) / 2
-    is_curreny = is_currency_pair(symbol)
-    pips = calculate_pips(stop_loss, open_price, symbol, is_curreny)
-    pip_value = calculate_pip_value(pips, risk_percentage, account_balance, is_curreny)
-    volume = calculate_volume(pip_value, is_curreny, type=type)
-    new_volume = correct_volume(symbol, volume)
-
-    mt5_volume_label.config(text=f"MT5 Volume: {new_volume:.2f} lots")
-
 # Activate the entry price field
 def on_order_type_change():
     if order_type_var.get() == "Market":
         entry_price_entry.config(state='disabled')
     else:
         entry_price_entry.config(state='normal')
-
-# Function to calculate and display the MT5 volume
-def calculate_and_show_volume():
-    update_mt5_volume()
 
 
 # Create the GUI
@@ -105,9 +80,10 @@ limit_radio.pack()
 
 # Symbol
 symbol_label = tk.Label(root, text="Symbol")
-symbol_label.pack()
-symbol_entry = tk.Entry(root)
-symbol_entry.pack()
+symbol_var = tk.StringVar()
+symbol_combobox = ttk.Combobox(root, textvariable=symbol_var, values=symbols_list, state="readonly")
+symbol_combobox.current(0)  # sélectionne le premier symbole par défaut
+symbol_combobox.pack()
 
 # Create a bold font
 button_font = font.Font(weight="bold")
@@ -159,14 +135,6 @@ risk_percentage_label = tk.Label(root, text="Risk Percentage")
 risk_percentage_label.pack()
 risk_percentage_entry = tk.Entry(root)
 risk_percentage_entry.pack()
-
-# MT5 Volume Label
-mt5_volume_label = tk.Label(root, text="MT5 Volume: 0.00 lots")
-mt5_volume_label.pack()
-
-# Calculate Volume Button
-calculate_volume_button = tk.Button(root, text="Calculate Volume", command=calculate_and_show_volume)
-calculate_volume_button.pack()
 
 # Start the GUI event loop
 root.mainloop()
